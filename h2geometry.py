@@ -38,8 +38,6 @@ class H2_segment:
             z2 = self.z2
             if normsq(z1) == 0:
                 z = z2
-                #print('z1=', z1)
-                #print('z2=', z2)
             else:
                 z = z1
             if normsq(z) == 0 or z1 == z2:

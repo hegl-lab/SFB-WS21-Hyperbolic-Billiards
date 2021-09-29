@@ -11,8 +11,7 @@ DELAY = 100
 #  * a method called 'collision' of the class Ball, which changes the direction of the moving ball when it hits a side of the polygon
 
 window = Window()
-#PROBLEM: z1 = 0 + 0j
-z1 = 0.3 + 0.5j
+z1 = 0 + 0j
 window.canvas.draw_point(z1)
 angle = 45
 ball_obj = Ball(z1, angle, "green")

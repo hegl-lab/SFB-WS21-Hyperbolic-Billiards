@@ -168,8 +168,11 @@ class Ball:
                     yield X, Y
         else:
             #Geodesic is a euclidean line through the origin
-            z1 = 0 + 0j
-            X, Y = canvas.math_to_px(0, 0)
+            if self.position == 0 + 0j:
+                z1 = 0.1 + 0.1 * sin(self.angle) / cos(self.angle) * 1j
+            else:
+                z1 = 0 + 0j
+            X, Y = canvas.math_to_px(z1.real, z1.imag)
             yield X, Y
             z2 = self.position
             s = H2_segment(z1, z2)
@@ -186,7 +189,6 @@ class Ball:
                 y = x * sin(self.angle) / cos(self.angle)
                 z = x + y * 1j
                 if math.sqrt(normsq(z)) > 1:
-                    print('here')
                     break
                 else:
                     X, Y = canvas.math_to_px(x, y)
