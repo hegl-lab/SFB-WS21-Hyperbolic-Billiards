@@ -7,18 +7,18 @@ class H2_segment:
 
     def __init__(self, z1, z2):
         if math.sqrt(normsq(z1))<=1 and math.sqrt(normsq(z2))<=1:
-            self.z1=z1
-            self.z2=z2
+            self.z1 = z1
+            self.z2 = z2
         else:
-            self.z1=0+0*1j
-            self.z2=self.z1
+            self.z1 = 0 + 0j
+            self.z2 = self.z1
 
     def get_circle(self):
         ''' returns the Euclidean circle that the hyperbolic segment is an arc of '''
-        x1=self.z1.real
-        y1=self.z1.imag
-        x2=self.z2.real
-        y2=self.z2.imag
+        x1 = self.z1.real
+        y1 = self.z1.imag
+        x2 = self.z2.real
+        y2 = self.z2.imag
         error= 10 ** (-4)
         if x1 * y2 > x2 * y1 + error or x1 * y2 < x2 * y1 - error:
             x = (x1**2 * y2 - x2**2 * y1 + y1**2 * y2 - y1 * y2**2 + y2 - y1) / (2 * (x1 * y2 - x2 * y1))
@@ -27,28 +27,30 @@ class H2_segment:
             r = math.sqrt(normsq(self.z1-c))
             return r, c
         else:
-            return -1, 0+0*1j
+            return -1, 0 + 0j
                                                   
     def get_ideal_endpoints(self):
         ''' returns the ideal endpoints of the geodesic extending the segment '''
         # complete
         r,c = self.get_circle()
-        if r==-1 and c==0+0*1j:
-            z1=self.z1
-            z2=self.z2
-            if normsq(z1)==0:
-                z=z2
+        if r == -1 and c == 0 + 0j:
+            z1 = self.z1
+            z2 = self.z2
+            if normsq(z1) == 0:
+                z = z2
+                #print('z1=', z1)
+                #print('z2=', z2)
             else:
-                z=z1
-            if normsq(z)==0 or z1==z2:
-                return 0+0*1j, 0+0*1j
+                z = z1
+            if normsq(z) == 0 or z1 == z2:
+                return 0 + 0j, 0 + 0j
             x1 = z.real / math.sqrt(normsq(z))
             x2 = -x1
             y1 = z.imag / math.sqrt(normsq(z))
             y2 = -y1
         else:
-            a=c.real
-            b=c.imag
+            a = c.real
+            b = c.imag
             if a != 0:
                 y1 = (b + a * r) / (r**2 + 1)
                 y2 = (b - a * r) / (r**2 + 1)
@@ -58,8 +60,8 @@ class H2_segment:
                 y1 = y2 = 1 / b
                 x1 = math.sqrt(1 - 1 / b**2)
                 x2 = -x1
-        e1=x1+y1*1j
-        e2=x2+y2*1j
+        e1 = x1 + y1 * 1j
+        e2 = x2 + y2 * 1j
         return e1, e2
 
 
