@@ -1,0 +1,231 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% deutsche Silbentrennung
+\usepackage[english]{babel}
+% wegen deutscher Umlaute
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[a4paper, left=3cm, right=2cm, top=3cm]{geometry}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{longtable}
+\usepackage{mathtools}
+\usepackage{leftidx}
+\usepackage{eurosym}
+\usepackage[headsepline]{scrlayer-scrpage}
+\usepackage{textpos}
+\usepackage{booktabs}
+\usepackage{qrcode}
+\usepackage{multicol}
+\usepackage{eso-pic}
+\usepackage[english]{babel}
+\usepackage{ragged2e}
+\usepackage{microtype}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{decorations.text}
+\usetikzlibrary{decorations.pathmorphing}
+\usepackage{amssymb}
+%\usepackage{my_ba_script}
+\usepackage{multicol, float, multirow, tabularx}
+\usepackage{graphicx}
+\usepackage{subfig} %for 2 pictures side by side	
+%\usepackage[subfigure]{tocloft}
+%\bibliographystyle{alphanumger}
+
+\pagestyle{scrheadings}
+\clearpairofpagestyles
+
+\ifoot{}
+\cfoot{}
+\ofoot{\pagemark}
+\allowdisplaybreaks
+\setlength{\parindent}{0pt}
+
+\newcommand{\ccinf}[1]{C_c^{\infty}(#1)}
+\newcommand{\intrn}{\int_{\mathbb{R}^n}}
+\newcommand{\hk}[1]{H^k(#1)}
+\newcommand{\wkp}[1]{W^{k,p}(#1)}
+\newcommand{\wkpo}[1]{W^{k,p}_0(#1)}
+\newcommand{\loc}{\mathrm{loc}}
+\newcommand{\wkploc}[3]{W^{#1,#2}_{\loc}(#3)}
+\newcommand{\rn}{\mathbb{R}^{n}}
+\newcommand{\n}{\mathbb{N}}
+\newcommand{\rN}{\mathbb{R}^{N}}
+\newcommand{\sequence}[1]{(u_{#1})_{#1}}
+\newcommand{\nltwo}[1]{\| #1 \|_{L^2(\mathbb{R}^n)}}
+\newcommand{\Aind}{A_{i,j}^{\alpha \beta}}
+\newcommand{\Delhe}{\Delta_e^h}
+\newcommand{\Delh}{\Delta_h}
+\newcommand{\seq}[1]{(#1_k)_{k\in\mathbb{N}}}
+\newcommand{\mor}[1]{L^{2,\lambda}(#1)}
+\newcommand{\morarg}[2]{L^{2,#1}(#2)}
+\newcommand{\camp}[1]{\mathcal{L}^{2,\lambda}(#1)}
+\newcommand{\camparg}[2]{\mathcal{L}^{2,#1}(#2)}
+\newcommand{\norm}[2]{\|#1\|_{#2}}
+\newcommand{\OcapB}[2]{{\Omega_{#1,#2}}}
+\newcommand{\diam}[1]{\mathrm{diam}(#1)}
+
+\newcommand{\dxi}{\frac{\partial}{\partial x_i}}
+\newcommand{\dyi}{\frac{\partial}{\partial y_i}}
+\newcommand{\intOm}{\int_\Omega}
+\newcommand{\intOmp}{\int_{\Omega'}}
+\newcommand{\intOme}{\int_{\Omega_\epsilon}}
+\newcommand{\intOmr}{\int_{\Omega_r(x)}}
+\newcommand{\intBr}{\int_{B_r(x)\cap\rn}}
+\newcommand{\intBrp}{\int_{B_r(x)\cap\rn_+}}
+\newcommand{\intBrm}{\int_{B_r(x)\cap\rn_-}}
+\newcommand{\mf}{\mathcal{M}(f)}
+\def\Xint#1{\mathchoice
+{\XXint\displaystyle\textstyle{#1}}%
+{\XXint\textstyle\scriptstyle{#1}}%
+{\XXint\scriptstyle\scriptscriptstyle{#1}}%
+{\XXint\scriptscriptstyle\scriptscriptstyle{#1}}%
+\!\int}
+\def\XXint#1#2#3{{\setbox0=\hbox{$#1{#2#3}{\int}$ }
+\vcenter{\hbox{$#2#3$ }}\kern-.6\wd0}}
+\def\ddashint{\Xint=}
+\def\dashint{\Xint-}
+
+\title{Billiards in Hyperbolic Geometry-notes}
+\author{Christian Alber, Mara-Eliana Popescu}
+\date{September 2021}
+
+\begin{document}
+
+\maketitle
+\section{Theory}
+\subsection{Some Questions}
+\begin{itemize}
+	\item A reference for the statement that all ideal rectangles are a one parameter family.
+	
+    \item Uniqueness for coding in hyperbolic plane. Don't understand the proofs for nonideal polygons of Nagar in Theorem 3.3. Given a valid coding, they want to construct a corresponding billiard trajectory. They say that they split the proof in 3 steps. Firstly, they prove it for periodic codes, secondly they prove a density result and lastly, they do an approximation. I don't see where they construct the trajectories for periodic codes. Were does the proof of Castle for ideal polygons fail?
+    
+    \item What happens for polygons which do not tesselate the plane. We could play billiard in them too. 
+    
+    \item Can we say something about the statistical distribution of the cutting sequences?
+    
+    \item Is there some connection to the spectrum of the Laplacian on the considered billiard table? Poisson type formula?
+    
+    \item Relation mixing and ergodicity
+    
+    \item Is there a relation between how often a side is hit and its length or angle? - Relation to ergodicity.
+    
+    \item Can we consider torus for hyperbolic rectangles? - I think not, because it would imply constant negative curvature on torus, which doesn't work due to Gauss-Bonnet. Probably problems with Riemannian submersion...
+    
+    \item Can we say something about $CF(L)$, the number of periodic trajectories of length smaller than $L$?
+\end{itemize}
+
+\section{The Simulation}
+Goal: We plan to design a program which simulates billiards in hyperbolic geometry. There are two main tasks:
+\begin{enumerate}
+    \item The math thats going on to calculate the actual trajectory or points in phase space.
+    \item The visualization of the billiard trajectory or phase space.
+\end{enumerate}
+
+Since there are different models of the hyperbolic plane, it might be interesting to do simulations in different models. Since Mara's code is based on the Poincare disk, it would be easiest to start with it. 
+
+\subsection{Computations}
+billiardTable: 
+\subsubsection{From initial direction to geodesic}
+Problem: Given a initial position $\vec{x}=(x,y)$ and a initial direction $\phi\in [0,2\pi)$, we want to construct the corresponding geodesic, i.e. the geodesic through $\vec{x}$ whose tangent at $\vec{x}$ has is in direction $(cos\phi,sin\phi)$. The geodesic to be determined is a circle, denote its center by $\vec{c}=(c_1,c_2)$ and its radius by $|r|$. The condition that the geodesic has direction $\phi$ at $\vec{x}$ implies
+\begin{equation*}
+	\vec{c} = \vec{x} + r (-sin\phi,cos\phi).
+\end{equation*}
+Next, we compute the points $\vec{P}_{1/2}$, where such a circle hits the boundary of the Poincare Disk. Using some formulas (see Wikipedia Schnittpunkte zweier Kreise section 1.4), we obtain
+\begin{equation*}
+	\vec{P}_{1/2} = d_0 \frac{\vec{c}}{|\vec{c}|} \pm \frac{e_0}{|\vec{c}|}(-c_2,c_1), 
+\end{equation*}
+where 
+\begin{equation*}
+	d_0 = \frac{1-|r|^2+|\vec{c}|^2}{2 |\vec{c}|} 
+	\text{ and } 
+	e_0 = \sqrt{1-d_0^2}.
+\end{equation*}
+The condition that the geodesics hits the boundary of the Poincare disk at right angles can be expressed in formulas by
+\begin{equation*}
+	\vec{P}_{1/2} \perp \vec{P}_{1/2} - \vec{c},
+\end{equation*}
+which is equivalent to
+\begin{equation*}
+	d_0|\vec{c}| = \vec{P}_{1/2} \cdot \vec{c} = |\vec{P}_{1/2}|^2 = d_0^2 + e_0^2 = d_0^2 + 1 - d_0^2 = 1.
+\end{equation*}
+Further algebraic manipulations lead to 
+\begin{equation*}
+	r^2 = -1 +|\vec{c}|^2.
+\end{equation*}
+Inserting $\vec{c}$ from above and solving for $r$ leads to 
+\begin{equation*}
+	r = \frac{1-|\vec{x}|^2}{2(-x sin\phi+ ycos\phi)}.
+\end{equation*}
+In summary, the geodesic we are searching for has center
+\begin{equation*}
+	\vec{c} = \vec{x} + 
+	\frac{1-|\vec{x}|^2}{2(-x sin\phi+ ycos\phi)}
+	 (-sin\phi,cos\phi)
+\end{equation*}
+and radius 
+\begin{equation*}
+	|r| = \frac{1-|\vec{x}|^2}{2(-x sin\phi+ ycos\phi)}.
+\end{equation*}
+
+\subsubsection{Parametrizing geodesics in D}
+Problem: Suppose we want to parametrize a geodesic arc with starting point $s$ and endpoint $e$. 
+We then want to parametrize the geodesic $\gamma_{\mathbb{D}}$ with unit speed. 
+
+Idea: We achieve this by doing the following 4 steps:
+\begin{enumerate}
+	\item Map the geodesic isometrically to the upper half plane via the cayley transform $\xi:\mathbb{D}\longrightarrow\mathbb{H}$.
+	\item Map the geodesic isometrically to the positive imaginary axis with an element $n\in Möb(\mathbb{H})$. Define $m:= n \circ \xi$. 
+	\item Compute the parametrization $\gamma_{\mathbb{H}}$ for the geodesic from $m(s)$ to $m(e)$.
+	\item Map the geodesic isometrically back to $\mathbb{D}$ by applying $m^{-1}$, i.e. $\gamma_{\mathbb{D}} := m^{-1} \circ \gamma_{\mathbb{H}}$.
+\end{enumerate}
+
+Step 1: The Cayley transform is given by $\xi(z) = \frac{iz+1}{-z-i}$. \\
+Step 2: Denote by $a$ and $b$ the ideal points of the geodesic connecting $s$ and $e$. The Cayley transform $\xi$ maps $a$ and $b$ to the real axis. Define
+\begin{equation*}
+	n(z) := \frac{z-\max(\xi(a), \xi(b))}{z-\min(\xi(a), \xi(b))}.
+\end{equation*}
+The max and min are used to obtain a positive determinant of $n$. Recall that elements of $Möb(\mathbb{H})$ with real coefficient must have positive determinant. 
+Now we can define $m:= n \circ \xi$, or explicitely
+\begin{equation*}
+	m(z) = \frac{\xi(z)-\max(\xi(a), \xi(b))}{\xi(z)-\min(\xi(a), \xi(b))}.
+\end{equation*}
+
+Step 3: We want that the geodesic has unit speed, that means
+\begin{equation*}
+	t = d_{\mathbb{H}}(\gamma_{\mathbb{H}}(t),m(s)) = \left| ln\left(\frac{\gamma_{\mathbb{H}}(t)}{m(s)}\right) \right|.
+\end{equation*}
+Solving for $t$, we obtain that if $m(s)<m(e)$, then $\gamma_{\mathbb{H}}(t) = m(s) e^{t}$. Otherwise,  $\gamma_{\mathbb{H}}(t) = m(s) e^{-t}$.
+
+Step 4: Calculating the inverse of $m$ leads to 
+\begin{equation*}
+	m^{-1}(z) = \frac{(1+i\min(\xi(a), \xi(b)))z -1- i \max(\xi(a), \xi(b))}{(-i-\min(\xi(a), \xi(b)))z + i + \max(\xi(a), \xi(b))}. 
+\end{equation*}
+From step 3 and 4, we can compute $\gamma_{\mathbb{D}} = m^{-1} \circ \gamma_{\mathbb{H}}$. 
+
+Moreover, we can compute the time $t_{hit}$ needed to reach the end by $t_{hit} = |ln(\frac{m(e)}{m(s)})|$.
+
+\subsection{Some questions}
+\begin{itemize}
+	
+    \item How to compute the trajectories? Given position and velocity, how can we compute the trajectory? 3 options: First, analytically solve. Second: Numerically solve. Third: Algebraically solve for the path, then parametrize via knowing the length.
+    
+    \item How to check that ball is at the boundary? - Maybe just consider Euklidean distance from ball to centers of circles corresponding to the sides of the billiard table. Maybe need to be careful with hyperbolic distance...
+    
+    \item How to decide whether a point is in the interior or exterior? (Needed to check whether initial position is valid.) - See above answer. 
+
+    
+\end{itemize}
+
+\subsection{Visualization}
+
+\subsection{Some questions}
+\begin{itemize}
+	\item How to visualize phase space. We could plot points for pointed geodesics $(\theta,\phi)$, better ideas?
+\end{itemize}
+
+\end{document}
+
