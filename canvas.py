@@ -3,12 +3,10 @@ import math
 import numpy as np
 from polygons import *
 from h2geometry import *
+from parametrization import *
 from tools import *
 
-sin = lambda degs: math.sin(math.radians(degs))
-cos = lambda degs: math.cos(math.radians(degs))
-arctan = lambda degs: math.atan(math.radians(degs))
-arcsin = lambda degs: math.asin(math.radians(degs))
+TIME = 0
 
 class Window:
     def __init__(self):
@@ -90,6 +88,11 @@ class Canvas:
                 # case 1: the euclidean line connecting z1 and z2 is a diameter-->r==-1 and c=0
                 # case 2: the euclidean line connecting z1 and z2 is not a diameter
                 if r == -1 and c == 0 + 0j:
+                    #print("here")
+                    #print("z1=", z1)
+                    #print("z2=", z2)
+                    #print("segment.z1=", segment.z1)
+                    #print("segment.z2=", segment.z2)
                     self.draw_segment(e1, e2, color)
                 else:
                     self.draw_circle_arc(c, r, e1, e2, color)
@@ -118,15 +121,17 @@ class Canvas:
         #update the position of the ball object
         X, Y = next(path_iter, (-2,-2))
         x, y = self.px_to_math(X, Y)
-        ball_obj.position = x + y * 1j
         #-2 tells us that the iterator has been exhausted --> collision with one side
-        if ball_obj.position.real != -2:
+        if not(X == -2 and Y == -2) :
+            ball_obj.position = x + y * 1j
             #update the position of the corresponding canvas object
             X0, Y0, X1, Y1 = self.cv.coords(ball)
-            Oldx, Oldy = (X0+X1) // 2, (Y0+Y1) // 2 #current center point
+            Oldx, Oldy = (X0 + X1) / 2, (Y0 + Y1) / 2 #current center point
             Dx, Dy = X - Oldx, Y - Oldy #amount of movement
             self.cv.move(ball, Dx, Dy)
             self.cv.after(delay, self.move_ball, ball, ball_obj, path_iter, delay)
+        else:
+            return
 
 class Ball:
     def __init__(self, position, angle, color):
@@ -148,48 +153,94 @@ class Ball:
             c = 0 + 0j
             radius = -1
         return c, radius
-
-    def movement(self, canvas, c, radius, delta_ang):
-        """ Generates coordinates corresponding to the geodesic it is moving along"""
-        if radius > 0:
-            start_ang = np.angle(c - self.position, deg=True) 
-            ang = start_ang
-            while True:
-                x = c.real + radius * cos(ang)
-                y = c.imag + radius * sin(ang)
-                z = x + y * 1j
-                #generate only points that remain within the billiard table -->condition here
-                #just stay within the Poincare disk for the moment
-                ang = ang + delta_ang
-                if math.sqrt(normsq(z)) > 1:
-                    continue
-                else:
-                    X, Y = canvas.math_to_px(x, y)
-                    yield X, Y
+    
+    def trajectory_ideal_endpoints(self, c_traj, r_traj):
+        c, r = c_traj, r_traj
+        if r != -1:
+            p1, p2, ok = intersection_points_of_circles(r, 1, c, 0 + 0j)
         else:
-            #Geodesic is a euclidean line through the origin
-            if self.position == 0 + 0j:
-                z1 = 0.1 + 0.1 * sin(self.angle) / cos(self.angle) * 1j
-            else:
-                z1 = 0 + 0j
-            X, Y = canvas.math_to_px(z1.real, z1.imag)
-            yield X, Y
-            z2 = self.position
-            s = H2_segment(z1, z2)
-            e1, e2 = s.get_ideal_endpoints()
-            dx = 0.1
-            if e1.real < e2.real:
-                x, y = e1.real, e1.imag
-            else:
-                x, y = e2.real, e2.imag
-            X, Y = canvas.math_to_px(x, y)
-            yield X, Y
-            while True:
-                x = x + dx
-                y = x * sin(self.angle) / cos(self.angle)
-                z = x + y * 1j
-                if math.sqrt(normsq(z)) > 1:
-                    break
+            p1 = cos(self.angle) + sin(self.angle) * 1j
+            p2 = -p1
+        return p1, p2
+
+    def mov(self, canvas, table, c, radius, coll_p):
+        s = self.position
+        e = coll_p
+        if e != -2 + 0j:
+            a, b = self.trajectory_ideal_endpoints(c, radius)
+            delta_t = 0.05
+            t = TIME
+            t_hit = abs(math.log(m(a,b,e).imag / m(a,b,s).imag))
+            for j in range(math.floor(t_hit / delta_t)):
+                z = gamma_D(s,e,a,b,t)
+                x, y = z.real, z.imag
+                X, Y = canvas.math_to_px(x, y)
+                yield X, Y
+                t = t + delta_t
+            global TIME
+            TIME = t_hit
+  
+    
+    def intersection_ball_geodesic(self, s, c_traj, r_traj, first_iter, coll_p):
+        r1, c1 = s.get_circle()
+        r2, c2 =  r_traj, c_traj
+        if r1 == -1 and r2 == -1:
+            return 0 + 0j, True
+        else:
+            if r1 != -1 and r2 != -1:
+                p1, p2, ok = intersection_points_of_circles(r1, r2, c1, c2)
+            elif r1 != -1:
+                if first_iter == True:
+                    p1, p2, ok = intersection_points_line_circle_angle(r1, c1, self.position, self.angle)
                 else:
-                    X, Y = canvas.math_to_px(x, y)
-                    yield X, Y
+                    p1, p2, ok = intersection_points_line_circle(r1, c1, coll_p, 0 + 0j)
+            else:
+                p1, p2, ok = intersection_points_line_circle(r2, c2, s.z1, s.z2)
+            if math.sqrt(normsq(p1)) < 1:
+                return p1, ok
+            else:
+                return p2, ok
+
+    def collision(self, canvas, table, prev_point, c_traj, r_traj, first_iter):
+        for i in range(table.nr):
+            s = H2_segment(table.vertices[i], table.vertices[(i + 1) % table.nr])
+            x, y = self.position.real, self.position.imag
+            z, ok = self.intersection_ball_geodesic(s, c_traj, r_traj, first_iter, prev_point)
+            if ok == True:
+                e1, e2 = self.trajectory_ideal_endpoints(c_traj, r_traj)
+                if first_iter == True:
+                    t1, t2, ok = intersection_points_line_circle_angle(1, 0 + 0j, self.position, self.angle)
+                    assert ok == True
+                    ang1 = np.angle(t1 - self.position, deg = True)
+                    ang2 = np.angle(t2 - self.position, deg = True)
+                    if abs(abs(ang1) - abs(self.angle)) <= 1.0:
+                        t = t1
+                    else:
+                        t = t2
+                    #canvas.draw_point(t, color = "green")
+                    if math.sqrt(normsq(t - e1)) < math.sqrt(normsq(t - e2)):
+                        e = e1
+                    else:
+                        e = e2
+                else:
+                    if z != prev_point:
+                        r_s, c_s = s.get_circle()
+                        if math.sqrt(normsq(c_s - e1)) <= r_s:
+                            e = e1
+                        else:
+                            e = e2    
+                    else:
+                        continue           
+                #canvas.draw_point(e, color = "yellow") 
+                if r_traj != -1:
+                    ang_self_c = np.angle(c_traj - self.position)
+                    ang_e_c = np.angle(c_traj - e)
+                    ang_z_c = np.angle(c_traj - z)
+                    if ang_z_c >= min(ang_self_c, ang_e_c) and ang_z_c <= max(ang_self_c, ang_e_c):
+                        return s, z
+                else:
+                    if abs(math.sqrt(normsq(z - c_traj)) + math.sqrt(normsq(z - e)) - math.sqrt(normsq(c_traj - e))) < 1e-4:
+                        return s, z
+        #if the ball has not hit any side of the table, then it must have hit a vertex
+        print("Check if it has hit a vertex")
+        return H2_segment(0 + 0j, 0 + 0j), -2 + 0j

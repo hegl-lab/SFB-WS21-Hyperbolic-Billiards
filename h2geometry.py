@@ -1,4 +1,4 @@
-from tools import normsq
+from tools import *
 import numpy as np
 import math
 
@@ -6,7 +6,7 @@ class H2_segment:
     ''' This class implements a hyperbolic segment or geodesic in the Poincaré disk model '''
 
     def __init__(self, z1, z2):
-        if math.sqrt(normsq(z1))<=1 and math.sqrt(normsq(z2))<=1:
+        if math.sqrt(normsq(z1))<= 1.0 + 1e-5 and math.sqrt(normsq(z2)) <= 1.0 + 1e-5:
             self.z1 = z1
             self.z2 = z2
         else:
@@ -77,17 +77,17 @@ class H2_reflection:
             b = c.imag
             x = z.real
             y = z.imag
-            if x==a and y==b:
+            if x == a and y == b:
                 x_ref = x
                 y_ref = y
             else:
                 x_ref = a + (x - a) * r ** 2 / ( (x - a) ** 2 + (y - b) ** 2)
                 y_ref = b + (y - b) * r ** 2 / ( (x - a) ** 2 + (y - b) ** 2)
             z_ref = x_ref + y_ref * 1j
-            if math.sqrt(normsq(z_ref))<1:
+            if math.sqrt(normsq(z_ref)) - 1.0 < 1e-4:
                 return z_ref
             else:
-                return 0+0*1j
+                return 0 + 0j
         #case 2: s is a diameter
         else:
             x = z.real
@@ -110,6 +110,64 @@ class H2_reflection:
             else:
                 return 0+0*1j
 
+########################################################
+def intersection_points_of_circles(r1, r2, c1, c2):
+    x1, y1 = c1.real, c1.imag
+    x2, y2 = c2.real, c2.imag
+    d12 = math.sqrt(normsq(c2 - c1))
+    d0 = ((r1 ** 2) - (r2 ** 2) + (d12 ** 2)) / (2 * d12)
+    if (r1 ** 2) - (d0 ** 2) > 0:
+        e0 = math.sqrt(r1 ** 2 - d0 ** 2)
+        m = (x2 - x1) / d12 + (y2 - y1) / d12 * 1j
+        n = (y1 - y2) / d12 + (x2 - x1) / d12 * 1j
+        p1 = c1 + d0 * m + e0 * n
+        p2 = c1 + d0 * m - e0 * n
+        ok = True
+    else:
+        p1 = p2 = 0 + 0j
+        ok = False
+    return p1, p2, ok
+
+def intersection_points_line_circle_angle(r, c, z, angle):
+    d = z.imag - tan(angle) * z.real + tan(angle) * c.real - c.imag
+    if (r ** 2) * (tan(angle) ** 2 + 1) > d ** 2:
+        x1 = c.real + (-tan(angle) * d + math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - (d ** 2))) / (tan(angle) ** 2 + 1)
+        x2 = c.real + (-tan(angle) * d - math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - (d ** 2))) / (tan(angle) ** 2 + 1)
+        y1 = c.imag + (d + tan(angle) * math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - d ** 2)) / (tan(angle) ** 2 + 1)
+        y2 = c.imag + (d - tan(angle) * math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - d ** 2)) / (tan(angle) ** 2 + 1)
+        p1 = x1 + y1 * 1j
+        p2 = x2 + y2 * 1j
+        ok = True
+    else:
+        p1 = p2 = 0 + 0j
+        ok = False
+    return p1, p2, ok
+
+def intersection_points_line_circle(r, c, a, b):
+    if a.real == b.real:
+        if r ** 2 - c.real ** 2 < 0:
+            p1 = p2 = 0 + 0j
+            ok = False
+        else:
+            p1 = c.imag + math.sqrt(r ** 2 - c.real ** 2)
+            p2 = c.imag - math.sqrt(r ** 2 - c.real ** 2)
+            ok = True
+    else:
+        m  = (b.imag - a.imag) / (b.real - a.real)
+        d = m * c.real - c.imag - m * c.real + c.imag
+        if r ** 2 * (m **2 + 1) > d **2:
+            x1 = c.real + (m * d - math.sqrt(r ** 2 * (m ** 2 + 1) - d ** 2)) / (m ** 2 + 1)
+            x2 = c.real + (m * d + math.sqrt(r ** 2 * (m ** 2 + 1) - d ** 2)) / (m ** 2 + 1)
+            y1 = c.imag + (-d - m * math.sqrt(r ** 2 * (m ** 2 + 1) - d ** 2)) / (m ** 2 + 1)
+            y2 = c.imag + (-d + m * math.sqrt(r ** 2 * (m ** 2 + 1) - d ** 2)) / (m ** 2 + 1)
+            p1 = x1 + y1 * 1j
+            p2 = x2 + y2 * 1j
+            ok = True
+        else:
+            p1 = p2 = 0 + 0j
+            ok = False
+    return p1, p2, ok
+########################################################
 
 def H2_midpoint(z1, z2):
     ''' Computes the hyperbolic midpoint of two points in the Poincaré disk model '''
@@ -172,43 +230,6 @@ def get_angle(z1,z2,z12,z22):
 #       <<<<<<< HEAD
         return rad_angle
 
-
-
-def get_barycenter(z1,z2,z3):
-    i = 0
-    if z1 == z2 or z3 == z2 or z1 == z3:
-        print("The three points have to be different!")
-        z = 0+ 0*1j
-        return z
-    while ((z1.real == 0 or z1.imag == 0) and z1 != 0+0*1j) or ((z2.real == 0 or z2.imag == 0) and z2 != 0 +0*1j) or ((z3.real == 0 or z3.imag == 0) and z3 != 0+0*1j):
-        z1 = np.cosh(i) * z1.real + np.sinh(i) * z1.imag + 1j * (z1.real * np.sinh(i) + np.cosh(i) * z1.imag)
-        z2 = np.cosh(i) * z2.real + np.sinh(i) * z2.imag + 1j * (z2.real * np.sinh(i) + np.cosh(i) * z2.imag)
-        z3 = np.cosh(i) * z3.real + np.sinh(i) * z3.imag + 1j * (z3.real * np.sinh(i) + np.cosh(i) * z3.imag)
-        i += 10
-
-    else:
-        if z2 == 0+0*1j:
-            a = z1
-            b = z3
-        elif z3 == 0+0*1j:
-            a = z1
-            b = z2
-        #z = (alpha*z1 + beta*z2 + gamma*z3)/(alpha+beta+gamma)
-        else:
-            a = H2_midpoint_isometry(z1, z2)
-            b = H2_midpoint_isometry(z1, z3)
-        alpha = get_angle(0, a, 0, b)
-        beta = get_angle(a, 0, a, b)
-        gamma = get_angle(b, 0, b, a)
-
-        area = (np.pi - (alpha+beta+gamma)) / 3
-
-
-        z = (a*(1-np.exp(-1j * area))-b*(1-np.exp(1j *area))) / (np.conj(a)*b*np.exp(1j*area) - a * np.conj(b)*np.exp(-1j*area))
-        z = np.cosh(i) * z.real - np.sinh(i) * z.imag + 1j * (z.real * -np.sinh(i) + np.cosh(i) * z.imag)
-        z = H2_midpoint_inverse_isometry(z1,z)
-
-    return z
 
 
 
