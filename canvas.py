@@ -6,8 +6,6 @@ from h2geometry import *
 from parametrization import *
 from tools import *
 
-TIME = 0
-
 class Window:
     def __init__(self):
         self.top = tkinter.Tk()
@@ -169,7 +167,7 @@ class Ball:
         if e != -2 + 0j:
             a, b = self.trajectory_ideal_endpoints(c, radius)
             delta_t = 0.05
-            t = TIME
+            t = 0
             t_hit = abs(math.log(m(a,b,e).imag / m(a,b,s).imag))
             for j in range(math.floor(t_hit / delta_t)):
                 z = gamma_D(s,e,a,b,t)
@@ -177,8 +175,7 @@ class Ball:
                 X, Y = canvas.math_to_px(x, y)
                 yield X, Y
                 t = t + delta_t
-            global TIME
-            TIME = t_hit
+
   
     
     def intersection_ball_geodesic(self, s, c_traj, r_traj, first_iter, coll_p):

@@ -83,7 +83,6 @@ def start_billiards(z, angle):
     #an object of type Ball and a graphical object looking like a ball
     ball_obj = Ball(z, angle, "blue")
     ball = window.canvas.draw_billiard_ball(ball_obj)
-    time = 0
 
     for i in range(N):
         if i == 0:
@@ -99,16 +98,15 @@ def start_billiards(z, angle):
         path_iter = ball_obj.mov(window.canvas, table, c, radius, coll_p)
         ball_obj_copy = ball_obj
         window.top.after(DELAY, window.canvas.move_ball, ball, ball_obj_copy, path_iter, DELAY)
-        time = TIME
     window.run()
 
 def change_direction(window, ball_obj, s, coll_point, c_traj, r_traj):
     refl_table = table.reflect(s)
-    window.canvas.draw_polygon(refl_table, color = "blue")
+    #window.canvas.draw_polygon(refl_table, color = "blue")
     s2, z2 = ball_obj.collision(window.canvas, refl_table, coll_point, c_traj, r_traj, False)
-    print("z2=", z2)
-    window.canvas.draw_point(z2, color = "purple")
-    window.canvas.draw_H2_segment(coll_point, z2, color = "red", complete=False)
+    #print("z2=", z2)
+    #window.canvas.draw_point(z2, color = "purple")
+    #window.canvas.draw_H2_segment(coll_point, z2, color = "red", complete=False)
     z2_ref = H2_reflection(s).reflect(z2)
     a, b = s2.z1, s2.z2
     a_ref = H2_reflection(s).reflect(a)
