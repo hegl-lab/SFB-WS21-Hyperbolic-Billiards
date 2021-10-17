@@ -1,6 +1,6 @@
 import tkinter
 from canvas import *
-from polygons import *
+from billiards import *
 import math
 
 DELAY = 500
@@ -9,36 +9,31 @@ N = 10
 def initialization():
     first_window = tkinter.Tk()
     first_window.title("Billiards in the hyperbolic plane")
-    frame = tkinter.Frame(first_window)
+    frame = tkinter.Frame(first_window, width = 600, height = 600)
+
     frame.pack()
 
     #Enter position
-    label_pos = tkinter.Label(frame, text="Please enter an initial position with (x, y) values:")
-    label_pos.pack()
+    label_pos = tkinter.Label(frame, text="Please enter an initial position with (x, y) values:", font = ("Helvetica", 18))
+    label_pos.grid(row = 0)
 
     #Enter a value for x
-    frame_x = tkinter.Frame(frame)
-    frame_x.pack()
-    xLabel = tkinter.Label(frame_x, text = "x")
-    xLabel.pack(side = "left")
-    x_e = tkinter.Entry(frame_x, textvariable = tkinter.StringVar(), exportselection = 0)
-    x_e.pack(side = "left")
+    xLabel = tkinter.Label(frame, text = "x", font = ("Helvetica", 18))
+    xLabel.grid(row = 1)
+    x_e = tkinter.Entry(frame, textvariable = tkinter.StringVar(),font = ("Helvetica", 18), exportselection = 0)
+    x_e.grid(row = 1, column = 1)
 
     #Enter a value for y
-    frame_y = tkinter.Frame(frame)
-    frame_y.pack()
-    yLabel = tkinter.Label(frame_y, text = "y")
-    yLabel.pack(side = "left")
-    y_e = tkinter.Entry(frame_y, textvariable = tkinter.StringVar(), exportselection = 0)
-    y_e.pack(side = "left")
+    yLabel = tkinter.Label(frame, text = "y", font = ("Helvetica", 18))
+    yLabel.grid(row = 2)
+    y_e = tkinter.Entry(frame, textvariable = tkinter.StringVar(),font = ("Helvetica", 18), exportselection = 0)
+    y_e.grid(row = 2, column = 1)
 
     #Enter angle of tangency
-    frame_ang = tkinter.Frame(frame)
-    frame_ang.pack()
-    label_angle = tkinter.Label(frame_ang, text = "Please enter a value for the angle:")
-    label_angle.pack(side = "left")
-    angle_e = tkinter.Entry(frame_ang, textvariable = tkinter.StringVar(), exportselection = 0)
-    angle_e.pack(side = "left")
+    label_angle = tkinter.Label(frame, text = "Please enter a value for the angle:", font = ("Helvetica", 18))
+    label_angle.grid(row = 3)
+    angle_e = tkinter.Entry(frame, textvariable = tkinter.StringVar(),font = ("Helvetica", 18), exportselection = 0)
+    angle_e.grid(row = 3, column = 1)
 
     def get_and_check():
         #Get the values of (x, y) and angle
@@ -48,15 +43,15 @@ def initialization():
 
         z = float(x) + float(y) * 1j
         if on_the_table(z) == False:
-            label = tkinter.Label(frame, text = "The starting position should be within the table!", fg = "red")
-            label.pack()
+            label_error = tkinter.Label(frame, text = "The starting position should be within the table!", fg = "red", font = ("Helvetica", 18))
+            label_error.grid(row = 4)
         else:
             first_window.destroy()
             start_billiards(z, (float(angle) + 360) % 360)
 
     #Check the introduced values
-    printButton = tkinter.Button(first_window, text = "Enter", command = get_and_check)
-    printButton.pack()
+    printButton = tkinter.Button(first_window, text = "Enter", font = ("Helvetica", 18), command = get_and_check)
+    printButton.pack(pady = 20)
     first_window.bind('<Return>', get_and_check)
     first_window.mainloop()
 
@@ -82,6 +77,7 @@ def start_billiards(z, angle):
     ball_obj = Ball(z, angle, "blue")
     ball_copy = ball_obj
     ball = window.canvas.draw_billiard_ball(ball_obj)
+    #coords is a list of points along the trajectory of the ball
     coords = []
 
     for i in range(N):
