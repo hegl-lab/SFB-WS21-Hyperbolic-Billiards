@@ -1,15 +1,19 @@
-from h2geometry import *
+from h2geometry import H2_reflection
+import math
+import numpy as np
 
 class Polygon:
-    def __init__(self, nr, vertices):
+    def __init__(self, nr, angles):
         self.nr = nr
-        self.vertices = vertices
+        self.angles = angles
     
     def reflect(self, s):
         '''It reflects a polygon across a given geodesic s and returns the new polygon'''
-        new_vertices = []
-        for vertex in self.vertices:
+        new_angles = []
+        for angle in self.angles:
+            vertex = math.e ** (angle * 1j)
             ref = H2_reflection(s).reflect(vertex)
-            new_vertices.append(ref)
-        return Polygon(self.nr, new_vertices)
+            new_ang = np.angle(ref)
+            new_angles.append(new_ang)
+        return Polygon(self.nr, new_angles)
 

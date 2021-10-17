@@ -129,33 +129,47 @@ def intersection_points_of_circles(r1, r2, c1, c2):
     return p1, p2, ok
 
 def intersection_points_line_circle_angle(r, c, z, angle):
-    d = z.imag - tan(angle) * z.real + tan(angle) * c.real - c.imag
-    if (r ** 2) * (tan(angle) ** 2 + 1) > d ** 2:
-        x1 = c.real + (-tan(angle) * d + math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - (d ** 2))) / (tan(angle) ** 2 + 1)
-        x2 = c.real + (-tan(angle) * d - math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - (d ** 2))) / (tan(angle) ** 2 + 1)
-        y1 = c.imag + (d + tan(angle) * math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - d ** 2)) / (tan(angle) ** 2 + 1)
-        y2 = c.imag + (d - tan(angle) * math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - d ** 2)) / (tan(angle) ** 2 + 1)
-        p1 = x1 + y1 * 1j
-        p2 = x2 + y2 * 1j
-        ok = True
+    #added the case with angle == +/- 90
+    if abs(angle) != 90:
+        d = tan(angle) * z.real - z.imag - tan(angle) * c.real + c.imag
+        if (r ** 2) * (tan(angle) ** 2 + 1) > d ** 2:
+            x1 = c.real + (tan(angle) * d - math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - (d ** 2))) / (tan(angle) ** 2 + 1)
+            x2 = c.real + (tan(angle) * d + math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - (d ** 2))) / (tan(angle) ** 2 + 1)
+            y1 = c.imag + (-d - tan(angle) * math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - d ** 2)) / (tan(angle) ** 2 + 1)
+            y2 = c.imag + (-d + tan(angle) * math.sqrt((r ** 2) * (tan(angle) ** 2 + 1) - d ** 2)) / (tan(angle) ** 2 + 1)
+            p1 = x1 + y1 * 1j
+            p2 = x2 + y2 * 1j
+            ok = True
+        else:
+            p1 = p2 = 0 + 0j
+            ok = False
     else:
-        p1 = p2 = 0 + 0j
-        ok = False
+        if r ** 2 - (z.real - c.real) ** 2 >= 0:
+            p1 = z.real + (c.imag + math.sqrt(r ** 2 - (z.real - c.real) ** 2)) * 1j
+            p2 = z.real + (c.imag - math.sqrt(r ** 2 - (z.real - c.real) ** 2)) * 1j
+            ok = True
+        else:
+            p1 = p2 = 0 + 0j
+            ok = False
     return p1, p2, ok
+
 
 def intersection_points_line_circle(r, c, a, b):
     if a.real == b.real:
-        if r ** 2 - c.real ** 2 < 0:
+        #corrected the condition here
+        if r ** 2 - (a.real - c.real) ** 2 < 0:
             p1 = p2 = 0 + 0j
             ok = False
         else:
-            p1 = c.imag + math.sqrt(r ** 2 - c.real ** 2)
-            p2 = c.imag - math.sqrt(r ** 2 - c.real ** 2)
+            #corrected the formulas here
+            p1 = a.real + (c.imag + math.sqrt((r ** 2) - (a.real - c.real) ** 2)) * 1j
+            p2 = a.real + (c.imag - math.sqrt((r ** 2) - (a.real - c.real) ** 2)) * 1j
             ok = True
     else:
         m  = (b.imag - a.imag) / (b.real - a.real)
-        d = m * c.real - c.imag - m * c.real + c.imag
-        if r ** 2 * (m **2 + 1) > d **2:
+        # instead of m * c.real - c.imag it must be m * a.real - a.imag
+        d = m * a.real - a.imag - m * c.real + c.imag
+        if (r ** 2) * ((m ** 2) + 1) > d ** 2:
             x1 = c.real + (m * d - math.sqrt(r ** 2 * (m ** 2 + 1) - d ** 2)) / (m ** 2 + 1)
             x2 = c.real + (m * d + math.sqrt(r ** 2 * (m ** 2 + 1) - d ** 2)) / (m ** 2 + 1)
             y1 = c.imag + (-d - m * math.sqrt(r ** 2 * (m ** 2 + 1) - d ** 2)) / (m ** 2 + 1)

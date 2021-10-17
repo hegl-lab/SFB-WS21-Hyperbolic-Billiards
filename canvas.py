@@ -107,7 +107,9 @@ class Canvas:
     def draw_polygon(self, p, color):
         ''' Draws a hyperbolic polygon '''
         for i in range(p.nr):
-            self.draw_H2_segment(p.vertices[i % p.nr],p.vertices[(i + 1) % p.nr], color, complete = False)
+            vertex1 = math.e ** (p.angles[i] * 1j)
+            vertex2 = math.e ** (p.angles[(i + 1) % p.nr] * 1j)
+            self.draw_H2_segment(vertex1, vertex2, color, complete = False)
 
     def draw_billiard_ball(self, ball_obj):
         '''Draws the ball at its initial position'''
@@ -115,21 +117,34 @@ class Canvas:
         ball = self.cv.create_oval(x-10, y-10, x+10, y+10, fill=ball_obj.color, outline=ball_obj.color)
         return ball
     
-    def move_ball(self, ball, ball_obj, path_iter, delay):
+    def move_ball(self, ball, ball_obj, coords, delay):
         #update the position of the ball object
-        X, Y = next(path_iter, (-2,-2))
-        x, y = self.px_to_math(X, Y)
-        #-2 tells us that the iterator has been exhausted --> collision with one side
-        if not(X == -2 and Y == -2) :
+        for X, Y in coords:
+            x, y = self.px_to_math(X, Y)
             ball_obj.position = x + y * 1j
             #update the position of the corresponding canvas object
             X0, Y0, X1, Y1 = self.cv.coords(ball)
             Oldx, Oldy = (X0 + X1) / 2, (Y0 + Y1) / 2 #current center point
             Dx, Dy = X - Oldx, Y - Oldy #amount of movement
             self.cv.move(ball, Dx, Dy)
-            self.cv.after(delay, self.move_ball, ball, ball_obj, path_iter, delay)
-        else:
-            return
+            self.cv.update()
+
+    def mov(self, ball, c, radius, coll_p):
+        coords = []
+        s = ball.position
+        e = coll_p
+        if e != -2 + 0j:
+            a, b = ball.trajectory_ideal_endpoints(c, radius)
+            delta_t = 0.005
+            t = 0
+            t_hit = abs(math.log(m(a,b,e).imag / m(a,b,s).imag))
+            for j in range(math.floor(t_hit / delta_t)):
+                z = gamma_D(s,e,a,b,t)
+                x, y = z.real, z.imag
+                X, Y = self.math_to_px(x, y)
+                coords.append((X, Y))
+                t = t + delta_t
+        return coords
 
 class Ball:
     def __init__(self, position, angle, color):
@@ -161,23 +176,6 @@ class Ball:
             p2 = -p1
         return p1, p2
 
-    def mov(self, canvas, table, c, radius, coll_p):
-        s = self.position
-        e = coll_p
-        if e != -2 + 0j:
-            a, b = self.trajectory_ideal_endpoints(c, radius)
-            delta_t = 0.05
-            t = 0
-            t_hit = abs(math.log(m(a,b,e).imag / m(a,b,s).imag))
-            for j in range(math.floor(t_hit / delta_t)):
-                z = gamma_D(s,e,a,b,t)
-                x, y = z.real, z.imag
-                X, Y = canvas.math_to_px(x, y)
-                yield X, Y
-                t = t + delta_t
-
-  
-    
     def intersection_ball_geodesic(self, s, c_traj, r_traj, first_iter, coll_p):
         r1, c1 = s.get_circle()
         r2, c2 =  r_traj, c_traj
@@ -198,46 +196,47 @@ class Ball:
             else:
                 return p2, ok
 
-    def collision(self, canvas, table, prev_point, c_traj, r_traj, first_iter):
+
+    def collision(self, table, first_iter, e1, e2 = 0 + 0j):
+        '''Finds the next collision point '''
+        #1. Find the ideal endpoint that corresponds to our direction on the given trajectory 
+        if first_iter == True:
+            #e2 will not have the default value
+            assert e2 != 0 + 0j
+            c_traj, r_traj = self.trajectory()
+            t1, t2, ok = intersection_points_line_circle_angle(1, 0 + 0j, self.position, self.angle)
+            assert ok == True
+            ang_t1 = (np.angle(t1 - self.position, deg=True) + 360) % 360
+            if abs(ang_t1 - self.angle) <= 1.0:
+                t = t1
+            else:
+                t = t2
+            #e is the ideal endpoint we will be working with next
+            if math.sqrt(normsq(t - e1)) < math.sqrt(normsq(t - e2)):
+                e = e1
+            else:
+                e = e2
+        else:
+            assert e2 == 0 + 0j
+            r_traj, c_traj = H2_segment(e1, self.position).get_circle()
+            e = e1
+        
+        #2. Find out which side is being hit using the angle corresponding to e
+        ang_e = (np.angle(e, deg=True) + 360) % 360
         for i in range(table.nr):
-            s = H2_segment(table.vertices[i], table.vertices[(i + 1) % table.nr])
-            x, y = self.position.real, self.position.imag
-            z, ok = self.intersection_ball_geodesic(s, c_traj, r_traj, first_iter, prev_point)
-            if ok == True:
-                e1, e2 = self.trajectory_ideal_endpoints(c_traj, r_traj)
-                if first_iter == True:
-                    t1, t2, ok = intersection_points_line_circle_angle(1, 0 + 0j, self.position, self.angle)
-                    assert ok == True
-                    ang1 = np.angle(t1 - self.position, deg = True)
-                    ang2 = np.angle(t2 - self.position, deg = True)
-                    if abs(abs(ang1) - abs(self.angle)) <= 1.0:
-                        t = t1
-                    else:
-                        t = t2
-                    #canvas.draw_point(t, color = "green")
-                    if math.sqrt(normsq(t - e1)) < math.sqrt(normsq(t - e2)):
-                        e = e1
-                    else:
-                        e = e2
-                else:
-                    if z != prev_point:
-                        r_s, c_s = s.get_circle()
-                        if math.sqrt(normsq(c_s - e1)) <= r_s:
-                            e = e1
-                        else:
-                            e = e2    
-                    else:
-                        continue           
-                #canvas.draw_point(e, color = "yellow") 
-                if r_traj != -1:
-                    ang_self_c = np.angle(c_traj - self.position)
-                    ang_e_c = np.angle(c_traj - e)
-                    ang_z_c = np.angle(c_traj - z)
-                    if ang_z_c >= min(ang_self_c, ang_e_c) and ang_z_c <= max(ang_self_c, ang_e_c):
-                        return s, z
-                else:
-                    if abs(math.sqrt(normsq(z - c_traj)) + math.sqrt(normsq(z - e)) - math.sqrt(normsq(c_traj - e))) < 1e-4:
-                        return s, z
-        #if the ball has not hit any side of the table, then it must have hit a vertex
-        print("Check if it has hit a vertex")
-        return H2_segment(0 + 0j, 0 + 0j), -2 + 0j
+            if i != table.nr - 1:
+                if math.degrees(table.angles[i]) <= ang_e and math.degrees(table.angles[i + 1]) >= ang_e:
+                    vertex1 = math.e ** (table.angles[i] * 1j)
+                    vertex2 = math.e ** (table.angles[i + 1] * 1j)
+                    side = H2_segment(vertex1, vertex2)
+                    break
+            else:
+                if math.degrees(table.angles[i]) % 360 <= ang_e and ang_e <= math.degrees(table.angles[0]):
+                    vertex1 = math.e ** (table.angles[i] * 1j)
+                    vertex2 = math.e ** (table.angles[0] * 1j)
+                    side = H2_segment(vertex1, vertex2)
+        
+        coll_p, ok = self.intersection_ball_geodesic(side, c_traj, r_traj, first_iter, self.position)
+        assert ok == True
+        return side, coll_p, e
+            
