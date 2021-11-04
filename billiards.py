@@ -99,17 +99,21 @@ class Ball:
         ang_e = (np.angle(e, deg=True) + 360) % 360
         for i in range(table.nr):
             if i != table.nr - 1:
-                if math.degrees(table.angles[i]) <= ang_e and math.degrees(table.angles[i + 1]) >= ang_e:
+                if math.degrees(table.angles[i]) < ang_e and math.degrees(table.angles[i + 1]) > ang_e:
                     vertex1 = math.e ** (table.angles[i] * 1j)
                     vertex2 = math.e ** (table.angles[i + 1] * 1j)
                     side = H2_segment(vertex1, vertex2)
                     break
+                if math.degrees(table.angles[i]) == ang_e or math.degrees(table.angles[i + 1]) == ang_e:
+                    return H2_segment(0 + 0j, 0 + 0j), 0 + 0j, e
             else:
                 if math.degrees(table.angles[i]) % 360 <= ang_e and ang_e <= math.degrees(table.angles[0]):
                     vertex1 = math.e ** (table.angles[i] * 1j)
                     vertex2 = math.e ** (table.angles[0] * 1j)
                     side = H2_segment(vertex1, vertex2)
-        
+
+                if math.degrees(table.angles[i]) % 360 == ang_e or math.degrees(table.angles[0]) == ang_e:
+                    return H2_segment(0 + 0j, 0 + 0j), 0 + 0j, e
         coll_p, ok = self.intersection_ball_geodesic(side, c_traj, r_traj, first_iter, self.position)
         assert ok == True
         return side, coll_p, e

@@ -2,9 +2,32 @@ import tkinter
 from canvas import *
 from billiards import *
 import math
+from h2geometry import *
+from horocycles import *
 
 DELAY = 500
-N = 10
+N = 5
+
+def test_horocycle():
+    window = Window()
+    tanPoint = math.e ** (2 * math.pi / 8 * 1j)
+    euclRadius = 0.3
+    h = Horocycle(euclRadius, tanPoint)
+    window.canvas.draw_horocycle(h, "blue")
+    #window.canvas.draw_point(tanPoint, color = "green")
+
+    #define a geodesic
+    z1 = -0.3 - 0.2j
+    z2 = -0.6 - 0.1j
+    s = H2_segment(z1, z2)
+    window.canvas.draw_H2_segment(z1, z2, color = "orange")
+    #window.canvas.draw_point(euclCenter, "black")
+    z1, z2 = h.closestAndFurthest(s)
+    #window.canvas.draw_point(z1, "red")
+    #window.canvas.draw_point(z2, "black")
+    h_ref = h.reflect_horocycle(s)
+    window.canvas.draw_horocycle(h_ref, "green")
+    window.run()
 
 def initialization():
     first_window = tkinter.Tk()
@@ -81,6 +104,7 @@ def start_billiards(z, angle):
     coords = []
 
     for i in range(N):
+        print("Iteration", i + 1)
         if i == 0:
             #find the trajectory of the ball
             c, radius = ball_obj.trajectory()
@@ -91,17 +115,33 @@ def start_billiards(z, angle):
             ball_obj.position = coll_p
             e = H2_reflection(s).reflect(e)
             s, coll_p, dummy_e = ball_obj.collision(table, False, e)
-            window.canvas.draw_point(coll_p, "pink")
-            radius, c = H2_segment(coll_p, ball_obj.position).get_circle()
-
+            if i == 4:
+                window.canvas.draw_point(coll_p, "red")
+                window.canvas.draw_point(ball_obj.position, "pink")
+                r, c = H2_segment(coll_p, ball_obj.position).get_circle()
+                print("c = ", c)
+                print("r = ", r)
+            if s.z1  == 0 + 0j and s.z2 == 0 + 0j:
+                window.canvas.draw_H2_segment(e, ball_obj.position, color = "purple", complete=False)
+                print("Vertex hit!")
+                print("Billiards stopped after",i, "hits." )
+                break
+            else:
+                #window.canvas.draw_point(coll_p, "pink")
+                radius, c = H2_segment(coll_p, ball_obj.position).get_circle()
+        
+        
         window.canvas.draw_H2_segment(ball_obj.position, coll_p, color="orange", complete = False)
         coords = coords + window.canvas.mov(ball_obj, c, radius, coll_p)
     
     window.canvas.move_ball(ball, ball_copy, coords, DELAY)
     window.run()
 
-nr = 6
+nr = 7
+assert nr >= 3
 angles = [2 * math.pi * l / nr for l in range(1, nr + 1)]
+angles[3] = angles[3] + 2 * math.pi / 14
 table = Polygon(nr, angles)
-initialization()
+test_horocycle()
+#initialization()
 

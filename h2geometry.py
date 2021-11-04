@@ -6,7 +6,7 @@ class H2_segment:
     ''' This class implements a hyperbolic segment or geodesic in the Poincaré disk model '''
 
     def __init__(self, z1, z2):
-        if math.sqrt(normsq(z1))<= 1.0 + 1e-5 and math.sqrt(normsq(z2)) <= 1.0 + 1e-5:
+        if math.sqrt(normsq(z1))<= 1.0 + 1e-2 and math.sqrt(normsq(z2)) <= 1.0 + 1e-2:
             self.z1 = z1
             self.z2 = z2
         else:
@@ -19,12 +19,12 @@ class H2_segment:
         y1 = self.z1.imag
         x2 = self.z2.real
         y2 = self.z2.imag
-        error= 10 ** (-4)
-        if x1 * y2 > x2 * y1 + error or x1 * y2 < x2 * y1 - error:
+        error = 10 ** (-2)
+        if abs(x1 * y2 - x2 * y1) >= error:
             x = (x1**2 * y2 - x2**2 * y1 + y1**2 * y2 - y1 * y2**2 + y2 - y1) / (2 * (x1 * y2 - x2 * y1))
             y = (x1**2 * x2 - x1 * x2**2 + y1**2 * x2 - x1 * y2**2 + x2 - x1) / (2 * (x2 * y1 - x1 * y2))
             c = x + y * 1j
-            r = math.sqrt(normsq(self.z1-c))
+            r = math.sqrt(normsq(self.z1 - c))
             return r, c
         else:
             return -1, 0 + 0j
@@ -84,7 +84,7 @@ class H2_reflection:
                 x_ref = a + (x - a) * r ** 2 / ( (x - a) ** 2 + (y - b) ** 2)
                 y_ref = b + (y - b) * r ** 2 / ( (x - a) ** 2 + (y - b) ** 2)
             z_ref = x_ref + y_ref * 1j
-            if math.sqrt(normsq(z_ref)) - 1.0 < 1e-4:
+            if math.sqrt(normsq(z_ref)) - 1.0 < 1e-1:
                 return z_ref
             else:
                 return 0 + 0j
@@ -93,7 +93,7 @@ class H2_reflection:
             x = z.real
             y = z.imag
             e1, e2 = self.s.get_ideal_endpoints()
-            if e2.real - e1.real!=0:
+            if e2.real - e1.real != 0:
                 slope = (e2.imag - e1.imag) / (e2.real - e1.real)
                 if slope != 0:
                     x_ref = (2 * (y - e1.imag + slope * e1.real) - x * (slope - 1 / slope)) / (slope + 1 / slope)
@@ -105,10 +105,10 @@ class H2_reflection:
                 x_ref = -x
                 y_ref = y
             z_ref = x_ref + y_ref * 1j
-            if math.sqrt(normsq(z_ref))<1:
+            if math.sqrt(normsq(z_ref)) < 1.0 + 1e-10:
                 return z_ref
             else:
-                return 0+0*1j
+                return 0 + 0j
 
 ########################################################
 def intersection_points_of_circles(r1, r2, c1, c2):

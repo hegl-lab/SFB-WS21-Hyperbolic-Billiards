@@ -5,6 +5,7 @@ from h2geometry import *
 from parametrization import *
 from tools import *
 from billiards import *
+from horocycles import *
 
 class Window:
     def __init__(self):
@@ -92,7 +93,9 @@ class Canvas:
                     #print("segment.z1=", segment.z1)
                     #print("segment.z2=", segment.z2)
                     self.draw_segment(e1, e2, color)
+            
                 else:
+            
                     self.draw_circle_arc(c, r, e1, e2, color)
             else:
                 #draw only the arc circle between z1 and z2
@@ -102,6 +105,7 @@ class Canvas:
                 if r == -1 and c == 0 + 0j:
                     self.draw_segment(z1, z2, color)
                 else:
+                    print("here")
                     self.draw_circle_arc(c, r, z1, z2, color)
 
     def draw_polygon(self, p, color):
@@ -145,3 +149,8 @@ class Canvas:
                 coords.append((X, Y))
                 t = t + delta_t
         return coords
+
+    #HOROCYCLE
+    def draw_horocycle(self, h, color):
+        hCenter = h.euclCenter()
+        self.draw_circle(hCenter, h.euclRadius, color)
